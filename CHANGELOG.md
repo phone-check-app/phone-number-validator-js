@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.6.0 (Unreleased)
+## v1.7.0
 ### Features
 - Add serverless architecture support with lazy resource loading
 - Add lint-staged for automated code quality checks on commit
