@@ -35,7 +35,7 @@ geocoder(
 
 #### Example
 ```javascript
-import { geocoder, parsePhoneNumberFromString } from '@devmehq/phone-number-validator-js'
+import { geocoder, parsePhoneNumberFromString } from '@phonecheck/phone-number-validator-js'
 
 const phoneNumber = parsePhoneNumberFromString('+41431234567')
 const locationEN = geocoder(phoneNumber) // "Zurich"
@@ -67,7 +67,7 @@ carrier(
 
 #### Example
 ```javascript
-import { carrier, parsePhoneNumberFromString } from '@devmehq/phone-number-validator-js'
+import { carrier, parsePhoneNumberFromString } from '@phonecheck/phone-number-validator-js'
 
 const phoneNumber = parsePhoneNumberFromString('+8619912345678')
 const carrierEN = carrier(phoneNumber) // "China Telecom"
@@ -95,7 +95,7 @@ timezones(
 
 #### Example
 ```javascript
-import { timezones, parsePhoneNumberFromString } from '@devmehq/phone-number-validator-js'
+import { timezones, parsePhoneNumberFromString } from '@phonecheck/phone-number-validator-js'
 
 const phoneNumber = parsePhoneNumberFromString('+12124567890')
 const tzs = timezones(phoneNumber) // ['America/New_York']
@@ -115,7 +115,7 @@ clearCache(): void
 
 #### Example
 ```javascript
-import { clearCache } from '@devmehq/phone-number-validator-js'
+import { clearCache } from '@phonecheck/phone-number-validator-js'
 
 // Clear all cached data
 clearCache()
@@ -136,7 +136,7 @@ getCacheSize(): number
 
 #### Example
 ```javascript
-import { getCacheSize } from '@devmehq/phone-number-validator-js'
+import { getCacheSize } from '@phonecheck/phone-number-validator-js'
 
 const size = getCacheSize()
 console.log(`Current cache size: ${size}`)
@@ -157,7 +157,7 @@ setCacheSize(size: number): void
 
 #### Example
 ```javascript
-import { setCacheSize } from '@devmehq/phone-number-validator-js'
+import { setCacheSize } from '@phonecheck/phone-number-validator-js'
 
 // Limit cache to 50 entries
 setCacheSize(50)
@@ -245,7 +245,7 @@ The library uses [tiny-lru](https://www.npmjs.com/package/tiny-lru) for optimal 
 For long-running applications:
 
 ```javascript
-import { setCacheSize, clearCache, getCacheSize } from '@devmehq/phone-number-validator-js'
+import { setCacheSize, clearCache, getCacheSize } from '@phonecheck/phone-number-validator-js'
 
 // Option 1: Limit cache size
 setCacheSize(50) // Balance between performance and memory
@@ -273,7 +273,7 @@ const checkMemory = () => {
 All functions handle invalid inputs gracefully:
 
 ```javascript
-import { geocoder, carrier, timezones } from '@devmehq/phone-number-validator-js'
+import { geocoder, carrier, timezones } from '@phonecheck/phone-number-validator-js'
 
 // All return null for invalid inputs
 geocoder(undefined) // null

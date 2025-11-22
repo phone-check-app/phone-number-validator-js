@@ -13,9 +13,9 @@ This library now supports serverless environments without Node.js dependencies! 
 ## Installation
 
 ```bash
-npm install @devmehq/phone-number-validator-js
+npm install @phonecheck/phone-number-validator-js
 # or
-yarn add @devmehq/phone-number-validator-js
+yarn add @phonecheck/phone-number-validator-js
 ```
 
 ## Building for Serverless
@@ -45,7 +45,7 @@ import {
   geocoderAsync, 
   carrierAsync, 
   timezonesAsync 
-} from '@devmehq/phone-number-validator-js/lib/serverless.esm.min.js';
+} from '@phonecheck/phone-number-validator-js/lib/serverless.esm.min.js';
 
 // Set up your resource loader (see examples below)
 import { CloudflareKVLoader } from './resource-loaders.js';
@@ -375,10 +375,10 @@ The serverless API is identical to the Node.js version. Simply change your impor
 
 ```javascript
 // Before (Node.js only)
-import { parsePhoneNumber } from '@devmehq/phone-number-validator-js';
+import { parsePhoneNumber } from '@phonecheck/phone-number-validator-js';
 
 // After (Serverless)
-import { parsePhoneNumber } from '@devmehq/phone-number-validator-js/lib/serverless.esm.js';
+import { parsePhoneNumber } from '@phonecheck/phone-number-validator-js/lib/serverless.esm.js';
 ```
 
 ## Troubleshooting
@@ -414,7 +414,7 @@ Complete working examples for each platform are available in the `examples/serve
 
 ## Support
 
-For issues or questions about serverless deployment, please open an issue on [GitHub](https://github.com/devmehq/phone-number-validator-js/issues).
+For issues or questions about serverless deployment, please open an issue on [GitHub](https://github.com/phone-check-app/phone-number-validator-js/issues).
 
 ## License
 

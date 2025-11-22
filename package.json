@@ -1,5 +1,5 @@
 {
-  "name": "@devmehq/phone-number-validator-js",
+  "name": "@phonecheck/phone-number-validator-js",
   "version": "1.5.1",
   "description": "Verify phone number, validate format, checking carrier name, geo and timezone infos.",
   "keywords": [
@@ -15,16 +15,16 @@
     "international",
     "libphonenumber"
   ],
-  "homepage": "https://github.com/devmehq/phone-number-validator-js#readme",
+  "homepage": "https://github.com/phone-check-app/phone-number-validator-js#readme",
   "bugs": {
-    "url": "https://github.com/devmehq/phone-number-validator-js/issues"
+    "url": "https://github.com/phone-check-app/phone-number-validator-js/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/devmehq/phone-number-validator-js.git"
+    "url": "git+https://github.com/phone-check-app/phone-number-validator-js.git"
   },
   "license": "BSL 1.1",
-  "author": "DEV.ME <support@dev.me> (https://dev.me)",
+  "author": "PHONE-CHECK.APP <support@phone-check.app> (https://phone-check.app)",
   "exports": {
     ".": {
       "import": "./lib/index.es.js",
@@ -75,11 +75,11 @@
   },
   "dependencies": {
     "bson": "^7.0.0",
-    "libphonenumber-js": "^1.12.27",
+    "libphonenumber-js": "^1.12.29",
     "tiny-lru": "^11.4.5"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.6",
+    "@biomejs/biome": "^2.3.7",
     "@rollup/plugin-commonjs": "^29.0.0",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.3",

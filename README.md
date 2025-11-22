@@ -1,9 +1,9 @@
 # Phone Number information lookup, validation,  carrier name, geo and timezone infos
 
-[![NPM version](https://badgen.net/npm/v/@devmehq/phone-number-validator-js)](https://npm.im/@devmehq/phone-number-validator-js)
-[![Build Status](https://github.com/devmehq/phone-number-validator-js/workflows/CI/badge.svg)](https://github.com/devmehq/phone-number-validator-js/actions)
-[![Downloads](https://img.shields.io/npm/dm/@devmehq/phone-number-validator-js.svg)](https://www.npmjs.com/package/@devmehq/phone-number-validator-js)
-[![UNPKG](https://img.shields.io/badge/UNPKG-OK-179BD7.svg)](https://unpkg.com/browse/@devmehq/phone-number-validator-js@latest/)
+[![NPM version](https://badgen.net/npm/v/@phonecheck/phone-number-validator-js)](https://npm.im/@phonecheck/phone-number-validator-js)
+[![Build Status](https://github.com/phone-check-app/phone-number-validator-js/workflows/CI/badge.svg)](https://github.com/phone-check-app/phone-number-validator-js/actions)
+[![Downloads](https://img.shields.io/npm/dm/@phonecheck/phone-number-validator-js.svg)](https://www.npmjs.com/package/@phonecheck/phone-number-validator-js)
+[![UNPKG](https://img.shields.io/badge/UNPKG-OK-179BD7.svg)](https://unpkg.com/browse/@phonecheck/phone-number-validator-js@latest/)
 
 ### Verify phone number, validate format, checking carrier name, geo and timezone infos.
 
@@ -58,13 +58,13 @@ We offer this `phone verification and validation and more advanced features` in 
 ## Installation
 
 ```sh
-npm install @devmehq/phone-number-validator-js
+npm install @phonecheck/phone-number-validator-js
 ```
 
 or
 
 ```sh
-yarn add @devmehq/phone-number-validator-js
+yarn add @phonecheck/phone-number-validator-js
 ```
 
 ## Usage
@@ -86,7 +86,7 @@ yarn add @devmehq/phone-number-validator-js
 ### Basic Usage
 
 ```js
-import { geocoder, carrier, timezones, parsePhoneNumberFromString } from '@devmehq/phone-number-validator-js'
+import { geocoder, carrier, timezones, parsePhoneNumberFromString } from '@phonecheck/phone-number-validator-js'
 
 const fixedLineNumber = parsePhoneNumberFromString('+41431234567')
 const locationEN = geocoder(fixedLineNumber) // Zurich
@@ -110,7 +110,7 @@ import {
   setCacheSize,
   geocoder,
   parsePhoneNumberFromString 
-} from '@devmehq/phone-number-validator-js'
+} from '@phonecheck/phone-number-validator-js'
 
 // Adjust cache size based on your needs
 setCacheSize(50) // Limit to 50 entries
@@ -136,7 +136,7 @@ setInterval(() => {
 ### Error Handling
 
 ```js
-import { geocoder, parsePhoneNumberFromString } from '@devmehq/phone-number-validator-js'
+import { geocoder, parsePhoneNumberFromString } from '@phonecheck/phone-number-validator-js'
 
 // Invalid phone numbers return null
 const invalid = parsePhoneNumberFromString('invalid')
@@ -158,7 +158,7 @@ import {
   PhoneNumber,
   GeocoderLocale,
   CarrierLocale
-} from '@devmehq/phone-number-validator-js'
+} from '@phonecheck/phone-number-validator-js'
 
 // Type-safe locale usage
 const phoneNumber: PhoneNumber | undefined = parsePhoneNumberFromString('+41431234567')
@@ -169,7 +169,7 @@ const carrierInfo: string | null = carrier(phoneNumber)
 const tzs: string[] | null = timezones(phoneNumber)
 
 // Cache management with types
-import { setCacheSize, getCacheSize, clearCache } from '@devmehq/phone-number-validator-js'
+import { setCacheSize, getCacheSize, clearCache } from '@phonecheck/phone-number-validator-js'
 
 const size: number = getCacheSize()
 setCacheSize(50)
@@ -196,7 +196,7 @@ import {
   geocoder,
   carrier,
   timezones
-} from '@devmehq/phone-number-validator-js/serverless'
+} from '@phonecheck/phone-number-validator-js/serverless'
 ```
 
 ### Serverless Examples
@@ -204,7 +204,7 @@ import {
 #### AWS Lambda
 ```js
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
-import { setResourceLoader, geocoder, parsePhoneNumber } from '@devmehq/phone-number-validator-js/serverless'
+import { setResourceLoader, geocoder, parsePhoneNumber } from '@phonecheck/phone-number-validator-js/serverless'
 
 const s3 = new S3Client()
 
@@ -238,7 +238,7 @@ export async function handler(event) {
 
 #### Cloudflare Workers
 ```js
-import { setResourceLoader, carrier, parsePhoneNumber } from '@devmehq/phone-number-validator-js/serverless'
+import { setResourceLoader, carrier, parsePhoneNumber } from '@phonecheck/phone-number-validator-js/serverless'
 
 // Use R2 storage for resources
 setResourceLoader({
@@ -265,7 +265,7 @@ export default {
 
 #### Vercel Edge Functions
 ```js
-import { setResourceLoader, timezones, parsePhoneNumber } from '@devmehq/phone-number-validator-js/serverless'
+import { setResourceLoader, timezones, parsePhoneNumber } from '@phonecheck/phone-number-validator-js/serverless'
 
 // Use Vercel Blob storage
 setResourceLoader({
@@ -294,8 +294,8 @@ The serverless version requires resource files to be deployed separately. Downlo
 
 ```bash
 # Extract resource files from the npm package
-npm pack @devmehq/phone-number-validator-js
-tar -xf devmehq-phone-number-validator-js-*.tgz
+npm pack @phonecheck/phone-number-validator-js
+tar -xf phonecheck-phone-number-validator-js-*.tgz
 cp -r package/resources/* your-storage-location/
 ```
 
@@ -366,7 +366,7 @@ Please feel free to open an issue or create a pull request and fix bugs or add f
 
 For issues, questions, or commercial licensing:
 
-🐛 [Open an Issue](https://github.com/devmehq/phone-number-validator-js/issues)
+🐛 [Open an Issue](https://github.com/phone-check-app/phone-number-validator-js/issues)
 📧 [Email Support](mailto:support@phone-check.app)
 📄 [Commercial License](https://phone-check.app/license/phone-number-validator)
 🌐 [Visit phone-check.app](https://phone-check.app)
