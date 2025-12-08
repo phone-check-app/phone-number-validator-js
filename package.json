@@ -1,6 +1,6 @@
 {
   "name": "@phonecheck/phone-number-validator-js",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "Verify phone number, validate format, checking carrier name, geo and timezone infos.",
   "keywords": [
     "telephone",
