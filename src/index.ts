@@ -1,6 +1,6 @@
 export * from 'libphonenumber-js'
 
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { type Document, deserialize } from 'bson'
 import type { PhoneNumber } from 'libphonenumber-js'
@@ -28,6 +28,9 @@ function getCode(dataPath: string, nationalNumber: string) {
     let data = codeDataCache.get(dataPath)
 
     if (!data) {
+      if (!existsSync(dataPath)) {
+        return null
+      }
       const bData = readFileSync(dataPath)
       data = deserialize(bData)
       codeDataCache.set(dataPath, data)
