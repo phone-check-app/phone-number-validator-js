@@ -56,3 +56,12 @@ it('maps issue #8 to the correct timezone', async () => {
   const tzs = timezones(phoneNr)
   expect(tzs).toEqual(['America/Los_Angeles'])
 })
+
+it('returns null without error for country codes without geocode data (e.g. France +33)', async () => {
+  const phoneNr = parsePhoneNumberFromString('+33140205050')
+  const spy = jest.spyOn(console, 'error')
+  const location = geocoder(phoneNr)
+  expect(location).toBeNull()
+  expect(spy).not.toHaveBeenCalled()
+  spy.mockRestore()
+})
