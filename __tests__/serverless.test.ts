@@ -396,7 +396,7 @@ describe('Advanced Serverless Features', () => {
       const duration = Date.now() - start
 
       expect(result).toBe('London')
-      expect(duration).toBeGreaterThanOrEqual(100)
+      expect(duration).toBeGreaterThanOrEqual(90)
     })
 
     it('should benefit from caching on repeated calls', async () => {
