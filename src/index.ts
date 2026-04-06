@@ -182,7 +182,7 @@ export function setCacheSize(size: number) {
   entries.reverse() // Start with most recent
   for (const [key, value] of entries) {
     if (codeDataCache.size < size) {
-      codeDataCache.set(key, value)
+      codeDataCache.set(key, value!)
     } else {
       break
     }
