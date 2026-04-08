@@ -2,7 +2,7 @@ export * from 'libphonenumber-js'
 
 import { type Document, deserialize } from 'bson'
 import type { PhoneNumber } from 'libphonenumber-js'
-import { type LRU, lru } from 'tiny-lru'
+import { lru } from 'tiny-lru'
 import type { CarrierLocale, GeocoderLocale } from './locales'
 
 const DEFAULT_CACHE_SIZE = 100
@@ -53,7 +53,7 @@ async function getCodeAsync(dataPath: string, nationalNumber: string) {
 }
 
 function getCodeSync(dataPath: string, nationalNumber: string) {
-  if (!dataPath || !nationalNumber || !resourceLoader || !resourceLoader.loadResourceSync) {
+  if (!dataPath || !nationalNumber || !resourceLoader?.loadResourceSync) {
     return null
   }
 
@@ -163,7 +163,7 @@ export async function carrierAsync(
 }
 
 export async function timezonesAsync(phonenumber: PhoneNumber | undefined) {
-  if (!phonenumber || !phonenumber.number) {
+  if (!phonenumber?.number) {
     return null
   }
 
@@ -193,7 +193,7 @@ export function carrier(phonenumber: PhoneNumber | undefined, locale: CarrierLoc
 }
 
 export function timezones(phonenumber: PhoneNumber | undefined) {
-  if (!phonenumber || !phonenumber.number) {
+  if (!phonenumber?.number) {
     return null
   }
 
@@ -229,7 +229,7 @@ export function setCacheSize(size: number) {
   entries.reverse()
   for (const [key, value] of entries) {
     if (codeDataCache.size < size) {
-      codeDataCache.set(key, value!)
+      codeDataCache.set(key, value as Document)
     } else {
       break
     }

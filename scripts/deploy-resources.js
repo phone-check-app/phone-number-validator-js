@@ -5,9 +5,9 @@
  * Usage: node deploy-resources.js [platform] [options]
  */
 
-const fs = require('fs')
-const path = require('path')
-const { promisify } = require('util')
+const fs = require('node:fs')
+const path = require('node:path')
+const { promisify } = require('node:util')
 const readdir = promisify(fs.readdir)
 const stat = promisify(fs.stat)
 const readFile = promisify(fs.readFile)

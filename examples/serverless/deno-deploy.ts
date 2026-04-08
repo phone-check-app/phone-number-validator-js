@@ -1,7 +1,7 @@
 // Deno Deploy Example
 // Deploy this using deployctl or Deno Deploy dashboard
 
-import { parsePhoneNumber, geocoder, carrier, timezones } from '../../lib/serverless.esm.js'
+import { carrier, geocoder, parsePhoneNumber, timezones } from '../../lib/serverless.esm.js'
 
 async function handleRequest(request: Request): Promise<Response> {
   // Handle CORS preflight
@@ -40,7 +40,7 @@ async function handleRequest(request: Request): Promise<Response> {
 
     const parsed = parsePhoneNumber(phoneNumber, countryCode)
 
-    if (!parsed || !parsed.isValid()) {
+    if (!parsed?.isValid()) {
       return new Response(JSON.stringify({ error: 'Invalid phone number' }), {
         status: 400,
         headers: {

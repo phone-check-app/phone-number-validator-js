@@ -1,12 +1,12 @@
 import { carrier, geocoder, parsePhoneNumberFromString, timezones } from '../src'
 
-it('geocodes with default locale en', async () => {
+it('geocodes with default locale en', () => {
   const phoneNr = parsePhoneNumberFromString('+41431234567')
   const location = geocoder(phoneNr)
   expect(location).toEqual('Zurich')
 })
 
-it('geocodes other locales correctly', async () => {
+it('geocodes other locales correctly', () => {
   const phoneNr = parsePhoneNumberFromString('+41431234567')
   const locationDE = geocoder(phoneNr, 'de')
   expect(locationDE).toEqual('Zürich')
@@ -14,7 +14,7 @@ it('geocodes other locales correctly', async () => {
   expect(locationIT).toEqual('Zurigo')
 })
 
-it('maps a carrier correctly', async () => {
+it('maps a carrier correctly', () => {
   const phoneNr = parsePhoneNumberFromString('01701234567', 'DE')
   const carrierEN = carrier(phoneNr)
   expect(carrierEN).toEqual('T-Mobile')
@@ -27,7 +27,7 @@ it('maps a carrier correctly', async () => {
   expect(carrierAR).toEqual('T-Mobile')
 })
 
-it('maps carriers with different locales correctly', async () => {
+it('maps carriers with different locales correctly', () => {
   const phoneNr = parsePhoneNumberFromString('+8619912345678')
   const carrierEN = carrier(phoneNr)
   expect(carrierEN).toEqual('China Telecom')
@@ -35,7 +35,7 @@ it('maps carriers with different locales correctly', async () => {
   expect(carrierZH).toEqual('中国电信')
 })
 
-it('maps timezones correctly', async () => {
+it('maps timezones correctly', () => {
   const phoneNr1 = parsePhoneNumberFromString('+49301234567')
   const tz1 = timezones(phoneNr1)
   expect(tz1).toEqual(['Europe/Berlin'])
@@ -45,19 +45,19 @@ it('maps timezones correctly', async () => {
   expect(tz2).toContain('America/New_York')
 })
 
-it('maps issue #7 to the correct carrier', async () => {
+it('maps issue #7 to the correct carrier', () => {
   const phoneNr = parsePhoneNumberFromString('+420779990001')
   const carrierCZ = carrier(phoneNr)
   expect(carrierCZ).toContain('T-Mobile')
 })
 
-it('maps issue #8 to the correct timezone', async () => {
+it('maps issue #8 to the correct timezone', () => {
   const phoneNr = parsePhoneNumberFromString('+19168085888')
   const tzs = timezones(phoneNr)
   expect(tzs).toEqual(['America/Los_Angeles'])
 })
 
-it('returns null without error for country codes without geocode data (e.g. France +33)', async () => {
+it('returns null without error for country codes without geocode data (e.g. France +33)', () => {
   const phoneNr = parsePhoneNumberFromString('+33140205050')
   const spy = jest.spyOn(console, 'error')
   const location = geocoder(phoneNr)

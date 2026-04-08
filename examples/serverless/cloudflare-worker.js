@@ -1,10 +1,10 @@
 // Cloudflare Worker Example
 // Deploy this using Wrangler CLI or Cloudflare Dashboard
 
-import { parsePhoneNumber, geocoder, carrier, timezones } from '../../lib/serverless.esm.js'
+import { carrier, geocoder, parsePhoneNumber, timezones } from '../../lib/serverless.esm.js'
 
 export default {
-  async fetch(request, env, ctx) {
+  async fetch(request, _env, _ctx) {
     // Handle CORS
     if (request.method === 'OPTIONS') {
       return new Response(null, {
@@ -38,7 +38,7 @@ export default {
 
       const parsed = parsePhoneNumber(phoneNumber, countryCode)
 
-      if (!parsed || !parsed.isValid()) {
+      if (!parsed?.isValid()) {
         return new Response(JSON.stringify({ error: 'Invalid phone number' }), {
           status: 400,
           headers: {

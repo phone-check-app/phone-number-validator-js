@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { type Document, deserialize } from 'bson'
 import type { PhoneNumber } from 'libphonenumber-js'
-import { type LRU, lru } from 'tiny-lru'
+import { lru } from 'tiny-lru'
 import type { CarrierLocale, GeocoderLocale } from './locales'
 
 const DEFAULT_CACHE_SIZE = 100
@@ -133,7 +133,7 @@ export function carrier(phonenumber: PhoneNumber | undefined, locale: CarrierLoc
  * @param phonenumber The phone number
  */
 export function timezones(phonenumber: PhoneNumber | undefined) {
-  if (!phonenumber || !phonenumber.number) {
+  if (!phonenumber?.number) {
     return null
   }
 
@@ -182,7 +182,7 @@ export function setCacheSize(size: number) {
   entries.reverse() // Start with most recent
   for (const [key, value] of entries) {
     if (codeDataCache.size < size) {
-      codeDataCache.set(key, value!)
+      codeDataCache.set(key, value as Document)
     } else {
       break
     }

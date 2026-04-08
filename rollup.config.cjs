@@ -8,7 +8,12 @@ const terser = require('@rollup/plugin-terser').default
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'))
 
 // External dependencies for main build
-const external = [...Object.keys(pkg.dependencies || {}), ...Object.keys(pkg.peerDependencies || {})]
+const external = [
+  ...Object.keys(pkg.dependencies || {}),
+  ...Object.keys(pkg.peerDependencies || {}),
+  'node:fs',
+  'node:path',
+]
 
 // Base ESBuild config
 const esbuildBase = {

@@ -1,7 +1,7 @@
 // Vercel Edge Function Example
 // Deploy this to api/validate.js in your Vercel project
 
-import { parsePhoneNumber, geocoder, carrier, timezones } from '../../lib/serverless.esm.js'
+import { carrier, geocoder, parsePhoneNumber, timezones } from '../../lib/serverless.esm.js'
 
 export const config = {
   runtime: 'edge',
@@ -45,7 +45,7 @@ export default async function handler(request) {
 
     const parsed = parsePhoneNumber(phoneNumber, countryCode)
 
-    if (!parsed || !parsed.isValid()) {
+    if (!parsed?.isValid()) {
       return new Response(JSON.stringify({ error: 'Invalid phone number' }), {
         status: 400,
         headers: {

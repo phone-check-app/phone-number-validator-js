@@ -111,7 +111,7 @@ describe('Comprehensive Phone Number Validation Tests', () => {
       const tzs = timezones(phoneNr)
       expect(tzs).toBeTruthy()
       expect(Array.isArray(tzs)).toBe(true)
-      expect(tzs!.length).toBeGreaterThan(0)
+      expect(tzs?.length).toBeGreaterThan(0)
     })
 
     it('should handle numbers with multiple timezones', () => {
@@ -225,7 +225,7 @@ describe('Comprehensive Phone Number Validation Tests', () => {
           format,
           format.startsWith('0') && !format.startsWith('00') ? 'CH' : undefined
         )
-        if (phoneNr && phoneNr.isValid()) {
+        if (phoneNr?.isValid()) {
           const location = geocoder(phoneNr)
           expect(location).toBeTruthy()
         }

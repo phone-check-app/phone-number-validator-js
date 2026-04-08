@@ -1,7 +1,7 @@
 // AWS Lambda Function Example
 // Deploy this as a Lambda function with Node.js 18+ runtime
 
-import { parsePhoneNumber, geocoder, carrier, timezones } from '../../lib/serverless.esm.js'
+import { carrier, geocoder, parsePhoneNumber, timezones } from '../../lib/serverless.esm.js'
 
 export const handler = async (event) => {
   try {
@@ -17,7 +17,7 @@ export const handler = async (event) => {
 
     const parsed = parsePhoneNumber(phoneNumber, countryCode)
 
-    if (!parsed || !parsed.isValid()) {
+    if (!parsed?.isValid()) {
       return {
         statusCode: 400,
         headers: { 'Content-Type': 'application/json' },
