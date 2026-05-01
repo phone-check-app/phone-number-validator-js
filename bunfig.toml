@@ -1,0 +1,8 @@
+# Bun runtime + test configuration.
+# Tests live in __tests__ split into:
+#   - __tests__/unit/*.test.ts        — fast in-memory suite (default)
+#   - __tests__/isolated/*.test.ts    — module-isolation cases (default)
+#   - __tests__/integration/*.test.ts — real fs / network suite (run on demand)
+[test]
+preload = ["./__tests__/helpers/setup.ts"]
+timeout = 30000

@@ -1,20 +1,33 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "lib": ["ES2020"],
-    "declaration": true,
-    "declarationMap": true,
-    "outDir": "./lib",
-    "rootDir": "./src",
-    "strict": true,
+    "outDir": "./dist",
+    "target": "es2019",
+    "module": "esnext",
     "moduleResolution": "bundler",
+    "allowJs": true,
+    "checkJs": false,
+    "strict": true,
     "esModuleInterop": true,
+    "sourceMap": false,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "declarationDir": "./dist",
+    "declaration": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "types": ["node", "jest"]
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src"
+    ],
+    "types": ["node", "bun"]
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "**/*.test.ts", "**/*.spec.ts"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "__tests__",
+    "examples"
+  ]
 }

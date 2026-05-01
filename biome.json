@@ -1,93 +1,69 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.10/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.14/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
     "useIgnoreFile": true
-  },
-  "files": {
-    "ignoreUnknown": false,
-    "includes": [
-      "**/*.ts",
-      "**/*.tsx",
-      "**/*.js",
-      "**/*.jsx",
-      "**/*.json",
-      "!!**/node_modules",
-      "!!**/lib",
-      "!!**/dist",
-      "!!**/build",
-      "!!**/coverage",
-      "!!**/*.min.js",
-      "!!**/resources"
-    ]
   },
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,
     "indentStyle": "space",
     "indentWidth": 2,
-    "lineWidth": 100,
-    "lineEnding": "lf",
-    "attributePosition": "auto"
+    "lineWidth": 120
   },
   "linter": {
     "enabled": true,
     "rules": {
       "recommended": true,
-      "complexity": {
-        "noBannedTypes": "error",
-        "noUselessConstructor": "error",
-        "noUselessTypeConstraint": "error"
-      },
       "correctness": {
-        "noConstAssign": "error",
-        "noConstantCondition": "error",
-        "noUndeclaredVariables": "error",
-        "noUnreachable": "error",
-        "noUnusedVariables": "warn"
+        "noUnusedVariables": "off",
+        "noUnusedFunctionParameters": "off"
       },
       "style": {
-        "noNonNullAssertion": "warn",
         "useConst": "error",
         "useTemplate": "warn"
       },
       "suspicious": {
-        "noAsyncPromiseExecutor": "error",
-        "noCatchAssign": "error",
-        "noCommentText": "warn",
-        "noDuplicateCase": "error",
-        "noDuplicateObjectKeys": "error",
         "noExplicitAny": "warn",
-        "noFallthroughSwitchClause": "error"
+        "noDebugger": "error",
+        "noConsole": "off",
+        "noVar": "error",
+        "useIterableCallbackReturn": "off",
+        "noAssignInExpressions": "off"
+      },
+      "complexity": {
+        "noBannedTypes": "warn",
+        "noForEach": "off"
       }
     }
   },
   "javascript": {
     "formatter": {
       "quoteStyle": "single",
-      "trailingCommas": "es5",
-      "semicolons": "asNeeded",
+      "semicolons": "always",
       "arrowParentheses": "always",
-      "bracketSpacing": true,
-      "bracketSameLine": false
-    },
-    "globals": [
-      "jest",
-      "it",
-      "describe",
-      "expect",
-      "beforeEach",
-      "afterEach",
-      "Deno"
-    ]
-  },
-  "json": {
-    "formatter": {
-      "enabled": true,
-      "indentStyle": "space",
-      "indentWidth": 2,
-      "lineWidth": 80
+      "trailingCommas": "es5"
     }
+  },
+  "files": {
+    "includes": [
+      "src/**/*.ts",
+      "__tests__/**/*.ts",
+      "examples/**/*.ts",
+      "scripts/**/*.ts",
+      "!!**/node_modules",
+      "!!**/dist",
+      "!!**/build",
+      "!!**/coverage",
+      "!!**/resources",
+      "!!**/*.json",
+      "!!**/*.md",
+      "!!**/*.yml",
+      "!!**/*.yaml",
+      "!!**/.git",
+      "!!**/.husky"
+    ],
+    "ignoreUnknown": true
   }
 }

@@ -1,421 +1,428 @@
-# Serverless Phone Number Validator
+# Serverless usage
 
-This library now supports serverless environments without Node.js dependencies! The serverless version uses a lightweight resource loader pattern, allowing you to load phone number metadata from your preferred storage backend.
+This document covers running `@phonecheck/phone-number-validator-js` in
+serverless / edge environments. The library ships with platform adapters for
+**AWS Lambda, Vercel, Cloudflare Workers, Google Cloud Functions, Netlify
+Functions, and Azure Functions**, plus a pure verifier you can wire into any
+runtime.
 
-## Features
+## Table of contents
 
-- **Zero Node.js dependencies** - Works in any JavaScript runtime
-- **Lightweight** - Only 244KB minified
-- **Flexible resource loading** - Load metadata from KV, S3, CDN, or any storage backend
-- **Multiple formats** - ESM, CommonJS, and UMD builds available
-- **Platform agnostic** - Works on AWS Lambda, Cloudflare Workers, Vercel Edge, Deno Deploy, and more
+- [What's included vs excluded](#whats-included-vs-excluded)
+- [Package entry points](#package-entry-points)
+- [Core API](#core-api)
+- [Resource loaders](#resource-loaders)
+- [Hosting the BSON tables](#hosting-the-bson-tables)
+- [Platform adapters](#platform-adapters)
+  - [AWS Lambda](#aws-lambda)
+  - [Vercel](#vercel)
+  - [Cloudflare Workers](#cloudflare-workers)
+  - [GCP Cloud Functions](#gcp-cloud-functions-2nd-gen)
+  - [Netlify Functions](#netlify-functions)
+  - [Azure Functions](#azure-functions-v4)
+- [Bundle size](#bundle-size)
+- [Limitations](#limitations)
 
-## Installation
+## What's included vs excluded
 
-```bash
-npm install @phonecheck/phone-number-validator-js
-# or
-yarn add @phonecheck/phone-number-validator-js
+The serverless entry imports nothing from `node:fs`, so it's safe to bundle
+into Workers, Edge Functions, or Deno Deploy. It includes:
+
+- **Resolver**: the prefix-walk lookup against deserialized BSON tables
+- **Locale fallback**: requested locale → `en`
+- **Cache**: shared LRU keyed by loader path
+- **Built-in loaders**: `FetchResourceLoader`, `KvResourceLoader`
+- **Per-platform adapters**: HTTP routing, CORS, JSON shape
+
+It does **not** include:
+
+- The Node `fs`-based loader (`NodeFsResourceLoader`) — Node-only entry
+- Any side-effecting `setResourceLoader` call — you wire one up explicitly
+- A bundled copy of `resources/*.bson` — you upload these to KV / S3 / a CDN
+
+## Package entry points
+
+```typescript
+// Node.js — fs-based, default loader installed on import
+import { ... } from '@phonecheck/phone-number-validator-js';
+
+// Pure serverless barrel — every adapter + the verifier
+import { ... } from '@phonecheck/phone-number-validator-js/serverless';
+
+// Just the verifier (smallest bundle)
+import { ... } from '@phonecheck/phone-number-validator-js/serverless/verifier';
+
+// Per-platform adapters (smallest per-handler bundle)
+import worker  from '@phonecheck/phone-number-validator-js/serverless/cloudflare';
+import lambda  from '@phonecheck/phone-number-validator-js/serverless/aws';
+import vercel  from '@phonecheck/phone-number-validator-js/serverless/vercel';
+import gcp     from '@phonecheck/phone-number-validator-js/serverless/gcp';
+import netlify from '@phonecheck/phone-number-validator-js/serverless/netlify';
+import azure   from '@phonecheck/phone-number-validator-js/serverless/azure';
 ```
 
-## Building for Serverless
+Each adapter subpath has its own ESM + CJS build and TypeScript types.
 
-```bash
-# Build serverless versions
-yarn build:serverless
+## Core API
+
+The serverless entry exposes the same shapes as the Node entry, minus the
+sync resolvers when no `loadResourceSync` is available. The public surface:
+
+### Resolution
+
+```typescript
+import {
+  carrier,        // sync — needs loader.loadResourceSync
+  carrierAsync,
+  enrichPhoneNumber,
+  geocoder,       // sync — needs loader.loadResourceSync
+  geocoderAsync,
+  setResourceLoader,
+  timezones,      // sync — needs loader.loadResourceSync
+  timezonesAsync,
+} from '@phonecheck/phone-number-validator-js/serverless';
 ```
 
-Creates in `lib/`:
-- `serverless.esm.js` - ES Module (555KB)
-- `serverless.esm.min.js` - ES Module minified (244KB)
-- `serverless.cjs.js` - CommonJS (556KB)
-- `serverless.umd.js` - UMD (568KB)
-- `serverless.umd.min.js` - UMD minified (244KB)
+### High-level dispatch
 
-## Usage
+```typescript
+import {
+  classifyRequest,
+  executeValidation,
+  validateBatch,
+  validateSingle,
+  type PhoneValidationResult,
+} from '@phonecheck/phone-number-validator-js/serverless';
 
-### Using the Serverless Version
+const result = await validateSingle('+14155552671', {
+  defaultCountry: 'US',
+  locale: 'en',
+  carrierLocale: 'en',
+});
+// {
+//   input: '+14155552671',
+//   valid: true,
+//   formatted: { e164, international, national, rfc3966 },
+//   country: 'US',
+//   countryCallingCode: '1',
+//   nationalNumber: '4155552671',
+//   type: 'FIXED_LINE_OR_MOBILE',
+//   geocode: 'San Francisco',
+//   carrier: null,           // landline-or-mobile, no carrier table hit
+//   timezones: ['America/Los_Angeles'],
+// }
+```
 
-The serverless version requires you to provide a resource loader for accessing phone number metadata:
+`PhoneValidationResult` is the shape every adapter returns — it's also a
+useful return type for your own handlers.
 
-```javascript
-import { 
-  setResourceLoader, 
-  parsePhoneNumber, 
-  geocoderAsync, 
-  carrierAsync, 
-  timezonesAsync 
-} from '@phonecheck/phone-number-validator-js/lib/serverless.esm.min.js';
+### Batch
 
-// Set up your resource loader (see examples below)
-import { CloudflareKVLoader } from './resource-loaders.js';
-const loader = new CloudflareKVLoader(env.PHONE_DATA);
-setResourceLoader(loader);
+`validateBatch` is `Promise.all` over `validateSingle`. Bad inputs yield a
+`{ valid: false, error }` entry rather than aborting the batch.
 
-// Parse and validate
-const phoneNumber = parsePhoneNumber('+14155552671', 'US');
+```typescript
+const results = await validateBatch(
+  ['+14155552671', 'garbage', '+442079460958'],
+  { locale: 'en' }
+);
+```
 
-if (phoneNumber && phoneNumber.isValid()) {
-  // Use async methods with lite version
-  const [geo, car, tz] = await Promise.all([
-    geocoderAsync(phoneNumber),
-    carrierAsync(phoneNumber),
-    timezonesAsync(phoneNumber)
-  ]);
-  
-  console.log({
-    international: phoneNumber.formatInternational(),
-    geocoder: geo,
-    carrier: car,
-    timezones: tz
-  });
+The serverless adapters cap batches at 100 entries (`MAX_BATCH_SIZE`).
+
+## Resource loaders
+
+The verifier doesn't read any files itself — you wire a `ResourceLoader`:
+
+```typescript
+interface ResourceLoader {
+  loadResource(path: string): Promise<Uint8Array | null>;
+  loadResourceSync?(path: string): Uint8Array | null;
 }
 ```
 
+Built-in loaders:
 
-## Platform-Specific Deployment
+### `FetchResourceLoader`
+
+For tables hosted on a CDN, R2, or any HTTP endpoint:
+
+```typescript
+import {
+  FetchResourceLoader,
+  setResourceLoader,
+} from '@phonecheck/phone-number-validator-js/serverless';
+
+setResourceLoader(
+  new FetchResourceLoader({
+    baseUrl: 'https://cdn.example.com/phone-resources/',
+    timeoutMs: 5000,
+    headers: { Authorization: `Bearer ${process.env.CDN_TOKEN}` },
+  })
+);
+```
+
+`fetch` is global on Node 18+, every edge runtime, and Bun. Pass
+`options.fetch` to inject a custom implementation (tests, custom auth).
+
+### `KvResourceLoader`
+
+For Cloudflare KV (or any namespace exposing `.get(key, 'arrayBuffer')`):
+
+```typescript
+import {
+  KvResourceLoader,
+  setResourceLoader,
+} from '@phonecheck/phone-number-validator-js/serverless';
+
+setResourceLoader(
+  new KvResourceLoader({
+    namespace: env.PHONE_RESOURCES,
+    prefix: 'phone-validator:', // optional
+  })
+);
+```
+
+The Cloudflare adapter does this automatically when `env.PHONE_RESOURCES` is
+bound — you don't need to call `setResourceLoader` yourself.
+
+### Custom
+
+Implement the interface for in-memory, S3, DynamoDB DAX, Redis, etc:
+
+```typescript
+class InMemoryLoader implements ResourceLoader {
+  constructor(private readonly tables: Map<string, Uint8Array>) {}
+  async loadResource(path: string) { return this.tables.get(path) ?? null; }
+  loadResourceSync(path: string)   { return this.tables.get(path) ?? null; }
+}
+```
+
+## Hosting the BSON tables
+
+The `resources/` directory ships with the package:
+
+```
+resources/
+├── carrier/<locale>/<country-code>.bson
+├── geocodes/<locale>/<country-code>.bson
+└── timezones.bson
+```
+
+For `FetchResourceLoader`, upload the tree as-is to your CDN / bucket and
+point `baseUrl` at it. For `KvResourceLoader`, upload each file as a KV
+value with the path as the key (prefixed by `prefix`).
+
+A starter upload script lives in [`scripts/`](./scripts/) — adapt the
+`baseUrl` / KV namespace to your account and run with `bun run`.
+
+## Platform adapters
+
+Every adapter accepts the same JSON shape:
+
+```jsonc
+// Single
+{ "phoneNumber": "+14155552671", "defaultCountry": "US", "locale": "en", "carrierLocale": "en" }
+
+// Batch
+{ "phoneNumbers": ["+14155552671", "+442079460958"], "locale": "de" }
+```
+
+Routed handlers expose:
+- `GET  /health` (or `/api/health` on Vercel + Azure)
+- `POST /validate` — single number
+- `POST /validate/batch` — array of numbers
 
 ### AWS Lambda
 
-Deploy as a Lambda function with Node.js 18+ runtime:
+```typescript
+import lambda from '@phonecheck/phone-number-validator-js/serverless/aws';
+import {
+  FetchResourceLoader,
+  setResourceLoader,
+} from '@phonecheck/phone-number-validator-js/serverless';
 
-```javascript
-// handler.js
-import { parsePhoneNumber, geocoder, carrier, timezones } from './serverless.esm.js';
+setResourceLoader(
+  new FetchResourceLoader({ baseUrl: process.env.PHONE_RESOURCES_URL ?? '' })
+);
 
-export const handler = async (event) => {
-  const { phoneNumber, countryCode } = JSON.parse(event.body);
-  const parsed = parsePhoneNumber(phoneNumber, countryCode);
-  
-  if (!parsed || !parsed.isValid()) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: 'Invalid phone number' })
-    };
-  }
-  
-  return {
-    statusCode: 200,
-    body: JSON.stringify({
-      valid: true,
-      country: parsed.country,
-      geocoder: geocoder(parsed),
-      carrier: carrier(parsed),
-      timezones: timezones(parsed)
-    })
-  };
-};
+// Routed handler — `/health`, `/validate`, `/validate/batch`
+export const handler = lambda.handler;
+
+// Or the classic shape (no path routing)
+export const apiGateway = lambda.apiGatewayHandler;
+
+// Or direct invocation (no API Gateway envelope)
+export const direct = lambda.lambdaHandler;
 ```
 
-Deploy with AWS SAM:
+### Vercel
 
-```yaml
-AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
+```typescript
+// app/api/[[...path]]/route.ts (App Router, Edge)
+import { handler } from '@phonecheck/phone-number-validator-js/serverless/vercel';
 
-Resources:
-  PhoneValidatorFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: .
-      Handler: handler.handler
-      Runtime: nodejs18.x
-      MemorySize: 256
-      Timeout: 10
+export const runtime = 'edge';
+export const POST = handler;
+export const GET  = handler;
+export const OPTIONS = handler;
+```
+
+```typescript
+// pages/api/validate.ts (Pages Router, Node)
+import { nodeHandler } from '@phonecheck/phone-number-validator-js/serverless/vercel';
+export default nodeHandler;
 ```
 
 ### Cloudflare Workers
 
-```javascript
-// worker.js
-import { parsePhoneNumber, geocoder, carrier, timezones } from './serverless.esm.js';
-
-export default {
-  async fetch(request) {
-    if (request.method !== 'POST') {
-      return new Response('Method not allowed', { status: 405 });
-    }
-    
-    const { phoneNumber, countryCode } = await request.json();
-    const parsed = parsePhoneNumber(phoneNumber, countryCode);
-    
-    if (!parsed || !parsed.isValid()) {
-      return Response.json({ error: 'Invalid phone number' }, { status: 400 });
-    }
-    
-    return Response.json({
-      valid: true,
-      country: parsed.country,
-      geocoder: geocoder(parsed),
-      carrier: carrier(parsed),
-      timezones: timezones(parsed)
-    });
-  }
-};
+```typescript
+// src/worker.ts
+import worker from '@phonecheck/phone-number-validator-js/serverless/cloudflare';
+export default worker;
 ```
-
-Deploy with Wrangler:
 
 ```toml
 # wrangler.toml
-name = "phone-validator"
-main = "worker.js"
-compatibility_date = "2023-05-18"
+name         = "phone-validator"
+compatibility_date = "2024-09-01"
 
-[build]
-command = "yarn build:serverless"
+[[kv_namespaces]]
+binding = "PHONE_RESOURCES"          # required — holds the BSON tree
+id      = "<KV-namespace-id>"
+
+[[kv_namespaces]]
+binding = "RESULT_CACHE"             # optional — caches per-number results
+id      = "<KV-namespace-id>"
 ```
+
+Upload the resources tree to the KV namespace once:
 
 ```bash
-wrangler deploy
+# Pseudocode — adapt to your account / namespace
+for f in $(find resources -type f -name '*.bson'); do
+  key="${f#./}"           # e.g. resources/geocodes/en/41.bson
+  wrangler kv:key put --binding=PHONE_RESOURCES "phone-validator:${key#resources/}" --path="$f"
+done
 ```
 
-### Vercel Edge Functions
+#### Durable Object
 
-```javascript
-// api/validate.js
-import { parsePhoneNumber, geocoder, carrier, timezones } from '../lib/serverless.esm.js';
-
-export const config = {
-  runtime: 'edge',
-};
-
-export default async function handler(request) {
-  const { phoneNumber, countryCode } = await request.json();
-  const parsed = parsePhoneNumber(phoneNumber, countryCode);
-  
-  if (!parsed || !parsed.isValid()) {
-    return Response.json({ error: 'Invalid phone number' }, { status: 400 });
-  }
-  
-  return Response.json({
-    valid: true,
-    country: parsed.country,
-    geocoder: geocoder(parsed),
-    carrier: carrier(parsed),
-    timezones: timezones(parsed)
-  });
-}
-```
-
-Deploy with Vercel CLI:
-
-```bash
-vercel deploy
-```
-
-### Deno Deploy
+The adapter exports `PhoneValidatorDO` for sticky in-memory caching:
 
 ```typescript
-// main.ts
-import { parsePhoneNumber, geocoder, carrier, timezones } from './serverless.esm.js';
-
-async function handler(request: Request): Promise<Response> {
-  if (request.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
-  }
-  
-  const { phoneNumber, countryCode } = await request.json();
-  const parsed = parsePhoneNumber(phoneNumber, countryCode);
-  
-  if (!parsed || !parsed.isValid()) {
-    return Response.json({ error: 'Invalid phone number' }, { status: 400 });
-  }
-  
-  return Response.json({
-    valid: true,
-    country: parsed.country,
-    geocoder: geocoder(parsed),
-    carrier: carrier(parsed),
-    timezones: timezones(parsed)
-  });
-}
-
-Deno.serve(handler);
+import { PhoneValidatorDO } from '@phonecheck/phone-number-validator-js/serverless/cloudflare';
+export { PhoneValidatorDO };
 ```
 
-Deploy with deployctl:
+```toml
+[[durable_objects.bindings]]
+name = "PHONE_VALIDATOR"
+class_name = "PhoneValidatorDO"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["PhoneValidatorDO"]
+```
+
+### GCP Cloud Functions (2nd gen)
+
+```typescript
+// index.ts
+import { gcpHandler } from '@phonecheck/phone-number-validator-js/serverless/gcp';
+import {
+  FetchResourceLoader,
+  setResourceLoader,
+} from '@phonecheck/phone-number-validator-js/serverless';
+
+setResourceLoader(new FetchResourceLoader({
+  baseUrl: process.env.PHONE_RESOURCES_URL ?? '',
+}));
+
+export const validatePhone = gcpHandler;
+```
 
 ```bash
-deployctl deploy --project=phone-validator main.ts
+gcloud functions deploy validatePhone \
+  --gen2 --runtime nodejs20 --trigger-http --allow-unauthenticated \
+  --set-env-vars=PHONE_RESOURCES_URL=https://cdn.example.com/phone-resources/
 ```
 
-### Netlify Edge Functions
+### Netlify Functions
 
-```javascript
-// netlify/edge-functions/validate.js
-import { parsePhoneNumber, geocoder, carrier, timezones } from '../../lib/serverless.esm.js';
+```typescript
+// netlify/functions/phone.ts
+import { netlifyHandler } from '@phonecheck/phone-number-validator-js/serverless/netlify';
+import {
+  FetchResourceLoader,
+  setResourceLoader,
+} from '@phonecheck/phone-number-validator-js/serverless';
 
-export default async (request, context) => {
-  const { phoneNumber, countryCode } = await request.json();
-  const parsed = parsePhoneNumber(phoneNumber, countryCode);
-  
-  if (!parsed || !parsed.isValid()) {
-    return Response.json({ error: 'Invalid phone number' }, { status: 400 });
-  }
-  
-  return Response.json({
-    valid: true,
-    country: parsed.country,
-    geocoder: geocoder(parsed),
-    carrier: carrier(parsed),
-    timezones: timezones(parsed)
-  });
-};
+setResourceLoader(new FetchResourceLoader({
+  baseUrl: process.env.PHONE_RESOURCES_URL ?? '',
+}));
 
-export const config = { path: "/api/validate" };
+export const handler = netlifyHandler;
 ```
 
-## API Reference
-
-All functions from the main library are available in the serverless build:
-
-### Core Functions
-- `parsePhoneNumber(text, defaultCountry?)` - Parse a phone number
-- `parsePhoneNumberFromString(text, defaultCountry?)` - Parse with error handling
-- `isValidNumber(phoneNumber)` - Check if valid
-- `isPossibleNumber(phoneNumber)` - Check if possibly valid
-- `getNumberType(phoneNumber)` - Get number type (MOBILE, FIXED_LINE, etc.)
-
-### Additional Metadata Functions
-- `geocoder(phoneNumber, locale?)` - Get geographical location
-- `carrier(phoneNumber, locale?)` - Get carrier information
-- `timezones(phoneNumber)` - Get timezone information
-
-### Cache Management
-- `clearCache()` - Clear internal cache
-- `getCacheSize()` - Get current cache size
-- `setCacheSize(size)` - Set maximum cache size
-
-## Resource Loaders
-
-The serverless version requires a resource loader to fetch phone number metadata. See `examples/serverless/resource-loaders.js` for implementations:
-
-### Available Loaders
-
-- **CloudflareKVLoader** - Uses Cloudflare KV storage
-- **S3ResourceLoader** - Loads from AWS S3
-- **RemoteFetchLoader** - Fetches from CDN/HTTP endpoints
-- **DenoKVLoader** - Uses Deno KV storage
-- **BundledResourceLoader** - Pre-loaded resources in memory
-- **CDNResourceLoader** - Optimized CDN fetching with edge caching
-- **RedisResourceLoader** - Uses Redis for resource storage
-- **MultiTierLoader** - Combines multiple loaders with fallback
-
-### Creating a Custom Loader
-
-```javascript
-class CustomResourceLoader {
-  async loadResource(path) {
-    // Return Uint8Array of the BSON file or null if not found
-    const data = await fetchFromYourSource(path);
-    return data ? new Uint8Array(data) : null;
-  }
-  
-  // Optional: sync version for synchronous functions
-  loadResourceSync(path) {
-    const data = fetchFromYourSourceSync(path);
-    return data ? new Uint8Array(data) : null;
-  }
-}
+```toml
+# netlify.toml — clean URLs (the adapter strips the prefix automatically)
+[[redirects]]
+from = "/api/*"
+to   = "/.netlify/functions/phone/:splat"
+status = 200
 ```
 
-## Performance Considerations
+### Azure Functions (v4)
 
-### Bundle Sizes
-- ESM minified: **244KB**
-- UMD minified: **244KB**
-- ESM unminified: 555KB
-- CommonJS: 556KB
-- UMD unminified: 568KB
+```typescript
+// src/functions/phone.ts
+import { app } from '@azure/functions';
+import { azureHandler } from '@phonecheck/phone-number-validator-js/serverless/azure';
+import {
+  FetchResourceLoader,
+  setResourceLoader,
+} from '@phonecheck/phone-number-validator-js/serverless';
 
-### Memory Usage
-- Initial load: ~2MB
-- Runtime with cache: ~3-5MB depending on usage
+setResourceLoader(new FetchResourceLoader({
+  baseUrl: process.env.PHONE_RESOURCES_URL ?? '',
+}));
 
-### Cold Start Times
-- AWS Lambda: ~200-400ms
-- Cloudflare Workers: ~50-100ms
-- Vercel Edge: ~100-200ms
-- Deno Deploy: ~50-150ms
-
-## Optimization Tips
-
-1. **Use appropriate cache size**: Default is 100 entries. Adjust based on your usage patterns.
-
-```javascript
-import { setCacheSize } from './serverless.esm.js';
-setCacheSize(50); // Reduce memory usage
-```
-
-2. **Reuse parsed numbers**: Parse once and reuse the PhoneNumber object.
-
-```javascript
-const parsed = parsePhoneNumber(input);
-// Use parsed multiple times
-const geo = geocoder(parsed);
-const car = carrier(parsed);
-const tz = timezones(parsed);
-```
-
-3. **Enable response caching**: Add cache headers to your responses.
-
-```javascript
-return new Response(JSON.stringify(result), {
-  headers: {
-    'Content-Type': 'application/json',
-    'Cache-Control': 'public, max-age=3600'
-  }
+app.http('phone', {
+  methods: ['GET', 'POST', 'OPTIONS'],
+  route: 'api/{*path}',
+  authLevel: 'anonymous',
+  handler: azureHandler,
 });
 ```
 
-## Migration from Node.js Version
+## Bundle size
 
-The serverless API is identical to the Node.js version. Simply change your import:
+Approximate sizes of the published serverless bundles (minified, with all deps
+inlined where appropriate):
 
-```javascript
-// Before (Node.js only)
-import { parsePhoneNumber } from '@phonecheck/phone-number-validator-js';
+| Bundle | Size |
+| - | - |
+| `serverless/verifier` (no adapter) | ~80 KB |
+| `serverless/aws` | ~85 KB |
+| `serverless/vercel` | ~85 KB |
+| `serverless/cloudflare` | ~90 KB (includes KV loader) |
+| `serverless/gcp` | ~85 KB |
+| `serverless/netlify` | ~85 KB |
+| `serverless/azure` | ~85 KB |
 
-// After (Serverless)
-import { parsePhoneNumber } from '@phonecheck/phone-number-validator-js/lib/serverless.esm.js';
-```
+`libphonenumber-js` dominates (>70 KB on its own). The BSON tables are not
+counted — they're loaded on demand from your loader.
 
-## Troubleshooting
+## Limitations
 
-### Module not found errors
-Ensure you've built the serverless version:
-```bash
-yarn build:serverless
-```
-
-### Large bundle size warnings
-The library includes comprehensive phone metadata. Use tree-shaking and compression:
-```javascript
-// Only import what you need
-import { parsePhoneNumber } from './serverless.esm.js';
-```
-
-### Memory issues
-Reduce cache size for memory-constrained environments:
-```javascript
-import { setCacheSize } from './serverless.esm.js';
-setCacheSize(20);
-```
-
-## Examples
-
-Complete working examples for each platform are available in the `examples/serverless/` directory:
-
-- `aws-lambda.js` - AWS Lambda implementation
-- `cloudflare-worker.js` - Cloudflare Workers implementation
-- `vercel-edge.js` - Vercel Edge Functions implementation
-- `deno-deploy.ts` - Deno Deploy implementation
-
-## Support
-
-For issues or questions about serverless deployment, please open an issue on [GitHub](https://github.com/phone-check-app/phone-number-validator-js/issues).
-
-## License
-
-BSL 1.1 - See LICENSE file for details.
+- **Sync API requires `loader.loadResourceSync`.** Edge runtimes that only
+  expose async storage (KV, R2, S3) must use `geocoderAsync` / `carrierAsync`
+  / `timezonesAsync` / `enrichPhoneNumber`.
+- **Cache is per-instance.** Workers KV / Lambda containers share results
+  across invocations only when the runtime keeps the instance warm. For
+  cross-instance caching, plug in `RESULT_CACHE` (Cloudflare) or a similar
+  KV-shaped binding for your platform.
+- **No network resolution of carrier ports.** The carrier mapping is the
+  *original* allocation — see the upstream
+  [libphonenumber FAQ](https://github.com/google/libphonenumber#mapping-phone-numbers-to-original-carriers).
