@@ -48,9 +48,9 @@ jobs:
     timeout-minutes: 15
 
     permissions:
-      # contents: write       — semantic-release pushes tags + version-bump commits
-      # issues / pull-requests — semantic-release-github comments on released PRs/issues
-      # id-token: write       — required for npm provenance (sigstore attestations)
+      # contents: write — semantic-release pushes tags and version-bump commits
+      # issues / pull-requests: write — semantic-release-github comments on released PRs/issues
+      # id-token: write — required for npm provenance (sigstore attestations)
       contents: write
       issues: write
       pull-requests: write
@@ -104,7 +104,8 @@ jobs:
         run: |
           set -euo pipefail
           # Plugins are pinned in devDependencies — installed via `bun install`
-          # above. Run via npx so the package-local versions are used.
+          # above. Run via npx so the package-local versions are used; no
+          # `npm i -g` (slow + unpinned).
           npx semantic-release $DRY_RUN 2>&1 | tee release-output.txt
 
           # Surface the published version + tag for the summary step.
@@ -127,9 +128,6 @@ jobs:
           VERSION: ${{ steps.semantic_release.outputs.version }}
           TAG: ${{ steps.semantic_release.outputs.tag }}
           DRY_RUN: ${{ inputs.dry-run }}
-          BRANCH: ${{ github.ref_name }}
-          COMMIT: ${{ github.sha }}
-          REPO: ${{ github.repository }}
         run: |
           {
             echo "## 📦 Release Summary"
@@ -143,16 +141,16 @@ jobs:
               echo
               echo "- **Version:** \`$VERSION\`"
               echo "- **Tag:** \`$TAG\`"
-              echo "- **Branch:** \`$BRANCH\`"
-              echo "- **Commit:** \`$COMMIT\`"
+              echo "- **Branch:** \`${{ github.ref_name }}\`"
+              echo "- **Commit:** \`${{ github.sha }}\`"
               echo
               echo "### 🔗 Links"
               echo "- [npm](https://www.npmjs.com/package/@phonecheck/phone-number-validator-js/v/$VERSION)"
-              echo "- [GitHub release](https://github.com/$REPO/releases/tag/$TAG)"
+              echo "- [GitHub release](https://github.com/${{ github.repository }}/releases/tag/$TAG)"
             else
               echo "### ℹ️ No release published"
               echo
-              echo "semantic-release decided no release was warranted on \`$BRANCH\`. Common reasons:"
+              echo "semantic-release decided no release was warranted on \`${{ github.ref_name }}\`. Common reasons:"
               echo "- No \`feat\` / \`fix\` / \`perf\` commits since the last tag"
               echo "- All new commits use non-release types (\`chore\`, \`docs\`, \`test\`, etc.)"
               echo "- Branch isn't configured for release in \`.releaserc.json\`"
