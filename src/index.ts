@@ -20,13 +20,11 @@ setResourceLoader(new NodeFsResourceLoader());
 // Re-export every parser / type from libphonenumber-js so consumers don't
 // need a second import for `parsePhoneNumberFromString`, `PhoneNumber`, etc.
 export * from 'libphonenumber-js';
-export {
-  clearCache,
-  DEFAULT_CACHE_SIZE,
-  getCacheSize,
-  getCacheStats,
-  setCacheSize,
-} from './cache';
+
+// Cache primitives
+export { clearCache, DEFAULT_CACHE_SIZE, getCacheSize, getCacheStats, setCacheSize } from './cache';
+
+// Core resolver — sync + async + enrichment helper
 export {
   carrier,
   carrierAsync,
@@ -40,7 +38,33 @@ export {
   timezones,
   timezonesAsync,
 } from './core';
+
+// Default Node FS loader
 export { NodeFsResourceLoader, type NodeFsResourceLoaderOptions } from './node-fs-loader';
+
+// High-level validator pipeline — convenient when wiring an HTTP server
+// (Express, Fastify, Hono, etc.) without going through libphonenumber-js
+// manually. The same helpers power the serverless adapters.
+export {
+  executeValidation,
+  type PhoneValidationResult,
+  validateBatch,
+  validateSingle,
+} from './serverless/_shared/dispatch';
+
+export {
+  type BatchOptions,
+  type BatchValidation,
+  classifyRequest,
+  extractBatchOptions,
+  MAX_BATCH_SIZE,
+  type ValidationDispatch,
+  type ValidationFailure,
+  type ValidationRequestBody,
+  validateBatchField,
+} from './serverless/_shared/validation';
+
+// Public type surface
 export type {
   CacheStats,
   CarrierLocale,
