@@ -1,126 +1,95 @@
-const { readFileSync } = require('node:fs')
-const esbuild = require('rollup-plugin-esbuild').default
-const resolve = require('@rollup/plugin-node-resolve').default
-const commonjs = require('@rollup/plugin-commonjs')
-const json = require('@rollup/plugin-json')
-const terser = require('@rollup/plugin-terser').default
+const { readFileSync } = require('fs');
+const esbuild = require('rollup-plugin-esbuild').default;
+const typescript = require('@rollup/plugin-typescript');
+const json = require('@rollup/plugin-json');
+const resolve = require('@rollup/plugin-node-resolve');
+const commonjs = require('@rollup/plugin-commonjs');
 
-const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'))
+const pkg = JSON.parse(readFileSync('./package.json', 'utf8'));
 
-// External dependencies for main build
-const external = [...Object.keys(pkg.dependencies || {}), ...Object.keys(pkg.peerDependencies || {})]
-
-// Base ESBuild config
-const esbuildBase = {
-  include: /\.ts$/,
-  exclude: /node_modules/,
-  sourceMap: false,
-  minify: false,
-  target: 'es2017',
-  tsconfig: './tsconfig.json',
-  loaders: {
-    '.ts': 'ts',
-  },
-}
-
-// Main library config (external dependencies)
-const mainConfig = {
-  input: 'src/index.ts',
-  output: [
-    {
-      file: pkg.main,
-      format: 'cjs',
-    },
-    {
-      file: pkg.module,
-      format: 'es',
-    },
-  ],
-  external,
-  plugins: [esbuild(esbuildBase)],
-}
-
-// Serverless bundled config
-const serverlessPlugins = [
+const plugins = [
+  json({
+    compact: true,
+    preferConst: true,
+  }),
   resolve({
-    preferBuiltins: false,
-    browser: true,
+    preferBuiltins: true,
   }),
   commonjs(),
-  json(),
-  esbuild(esbuildBase),
-]
+  esbuild({
+    target: 'es2020',
+    tsconfig: './tsconfig.json',
+    sourceMap: true,
+  }),
+];
 
-const serverlessConfig = [
-  // ESM build
-  {
-    input: 'src/index.serverless.ts',
-    output: {
-      file: 'lib/serverless.esm.js',
-      format: 'es',
-    },
-    plugins: serverlessPlugins,
+// CLI bundle uses a separate esbuild target because src/cli/index.ts uses
+// `import.meta.main` (Bun's direct-execution check). `import.meta` is only
+// supported from es2020 onward. The bundle output is still CJS — Node treats
+// `import.meta` as `undefined` there, which is exactly the runtime semantics
+// our `isDirectInvocation` predicate expects.
+const cliPlugins = [
+  json({ compact: true, preferConst: true }),
+  resolve({ preferBuiltins: true }),
+  commonjs(),
+  esbuild({
+    target: 'es2020',
+    tsconfig: './tsconfig.json',
+    sourceMap: true,
+  }),
+];
+
+const declarationPlugin = typescript({
+  tsconfig: './tsconfig.json',
+  declaration: true,
+  declarationDir: './dist',
+  emitDeclarationOnly: true,
+  rootDir: './src',
+  exclude: ['**/*.test.ts', '**/*.spec.ts', '__tests__/**/*', 'src/serverless/**/*'],
+  compilerOptions: {
+    module: 'esnext',
+    sourceMap: true,
   },
-  // ESM minified
+});
+
+const external = [
+  ...Object.keys(pkg.dependencies || {}),
+  ...Object.keys(pkg.peerDependencies || {}),
+  'node:fs',
+  'node:path',
+  'node:url',
+];
+
+module.exports = [
+  // Main library bundle (Node.js entry — fs-based loader)
   {
-    input: 'src/index.serverless.ts',
-    output: {
-      file: 'lib/serverless.esm.min.js',
-      format: 'es',
-    },
-    plugins: [
-      ...serverlessPlugins,
-      terser({
-        compress: {
-          drop_console: true,
-          passes: 2,
-        },
-        mangle: true,
-      }),
+    input: 'src/index.ts',
+    output: [
+      {
+        file: pkg.main,
+        format: 'cjs',
+        sourcemap: true,
+      },
+      {
+        file: pkg.module || 'dist/index.esm.js',
+        format: 'es',
+        sourcemap: true,
+      },
     ],
+    external,
+    plugins: [...plugins, declarationPlugin],
   },
-  // CommonJS build
+  // CLI bundle — single CJS file with a Node shebang. Wired into package.json
+  // as `bin: { "phone-validate": "./dist/cli/index.js" }`.
   {
-    input: 'src/index.serverless.ts',
+    input: 'src/cli/index.ts',
     output: {
-      file: 'lib/serverless.cjs.js',
+      file: 'dist/cli/index.js',
       format: 'cjs',
-      exports: 'named',
+      sourcemap: true,
+      banner: '#!/usr/bin/env node',
     },
-    plugins: serverlessPlugins,
+    external,
+    plugins: cliPlugins,
   },
-  // UMD build for browsers
-  {
-    input: 'src/index.serverless.ts',
-    output: {
-      file: 'lib/serverless.umd.js',
-      format: 'umd',
-      name: 'PhoneNumberValidator',
-      exports: 'named',
-    },
-    plugins: serverlessPlugins,
-  },
-  // UMD minified
-  {
-    input: 'src/index.serverless.ts',
-    output: {
-      file: 'lib/serverless.umd.min.js',
-      format: 'umd',
-      name: 'PhoneNumberValidator',
-      exports: 'named',
-    },
-    plugins: [
-      ...serverlessPlugins,
-      terser({
-        compress: {
-          drop_console: true,
-          passes: 2,
-        },
-        mangle: true,
-      }),
-    ],
-  },
-]
-
-// Export all configs
-module.exports = [mainConfig, ...serverlessConfig]
+];

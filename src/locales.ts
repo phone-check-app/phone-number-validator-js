@@ -32,5 +32,5 @@ export type GeocoderLocale =
   | 'uk'
   | 'vi'
   | 'zh'
-  | 'zh_Hant'
-export type CarrierLocale = 'ar' | 'be' | 'en' | 'fa' | 'ko' | 'ru' | 'uk' | 'zh' | 'zh_Hant'
+  | 'zh_Hant';
+export type CarrierLocale = 'ar' | 'be' | 'en' | 'fa' | 'ko' | 'ru' | 'uk' | 'zh' | 'zh_Hant';

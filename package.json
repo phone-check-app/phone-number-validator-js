@@ -1,68 +1,126 @@
 {
   "name": "@phonecheck/phone-number-validator-js",
-  "version": "1.7.1",
-  "description": "Verify phone number, validate format, checking carrier name, geo and timezone infos.",
+  "version": "2.0.0",
+  "private": false,
+  "description": "Validate, parse, and enrich international phone numbers — geocoding, carrier lookup, and timezone resolution. Sync (Node) + async (serverless) APIs, platform adapters, and a CLI.",
   "keywords": [
-    "telephone",
-    "phone",
-    "number",
-    "geo",
-    "geocode",
-    "location",
+    "phone-validation",
+    "phone-verification",
+    "phone-validator",
+    "phone-checker",
+    "phone-number",
+    "libphonenumber",
+    "geocoder",
     "carrier",
     "timezone",
-    "timezones",
     "international",
-    "libphonenumber"
+    "e164",
+    "typescript",
+    "serverless",
+    "edge",
+    "cloudflare",
+    "lambda"
   ],
   "homepage": "https://github.com/phone-check-app/phone-number-validator-js#readme",
-  "bugs": {
-    "url": "https://github.com/phone-check-app/phone-number-validator-js/issues"
-  },
+  "bugs": "https://github.com/phone-check-app/phone-number-validator-js/issues",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/phone-check-app/phone-number-validator-js.git"
+    "url": "git+ssh://git@github.com/phone-check-app/phone-number-validator-js.git"
   },
-  "license": "BSL 1.1",
+  "license": "SEE LICENSE IN LICENSE.md",
   "author": "PHONE-CHECK.APP <support@phone-check.app> (https://phone-check.app)",
   "exports": {
     ".": {
-      "import": "./lib/index.es.js",
-      "require": "./lib/index.js",
-      "types": "./lib/index.d.ts"
+      "require": "./dist/index.js",
+      "import": "./dist/index.esm.js",
+      "types": "./dist/index.d.ts"
     },
     "./serverless": {
-      "import": "./lib/serverless.esm.js",
-      "require": "./lib/serverless.cjs.js",
-      "types": "./lib/index.serverless.d.ts"
+      "require": "./dist/serverless/index.cjs.js",
+      "import": "./dist/serverless/index.esm.js",
+      "types": "./dist/serverless/index.d.ts"
+    },
+    "./serverless/verifier": {
+      "require": "./dist/serverless/verifier.cjs.js",
+      "import": "./dist/serverless/verifier.esm.js",
+      "types": "./dist/serverless/verifier.d.ts"
+    },
+    "./serverless/aws": {
+      "require": "./dist/serverless/adapters/aws-lambda.cjs.js",
+      "import": "./dist/serverless/adapters/aws-lambda.esm.js",
+      "types": "./dist/serverless/adapters/aws-lambda.d.ts"
+    },
+    "./serverless/vercel": {
+      "require": "./dist/serverless/adapters/vercel.cjs.js",
+      "import": "./dist/serverless/adapters/vercel.esm.js",
+      "types": "./dist/serverless/adapters/vercel.d.ts"
+    },
+    "./serverless/cloudflare": {
+      "require": "./dist/serverless/adapters/cloudflare.cjs.js",
+      "import": "./dist/serverless/adapters/cloudflare.esm.js",
+      "types": "./dist/serverless/adapters/cloudflare.d.ts"
+    },
+    "./serverless/gcp": {
+      "require": "./dist/serverless/adapters/gcp.cjs.js",
+      "import": "./dist/serverless/adapters/gcp.esm.js",
+      "types": "./dist/serverless/adapters/gcp.d.ts"
+    },
+    "./serverless/netlify": {
+      "require": "./dist/serverless/adapters/netlify.cjs.js",
+      "import": "./dist/serverless/adapters/netlify.esm.js",
+      "types": "./dist/serverless/adapters/netlify.d.ts"
+    },
+    "./serverless/azure": {
+      "require": "./dist/serverless/adapters/azure.cjs.js",
+      "import": "./dist/serverless/adapters/azure.esm.js",
+      "types": "./dist/serverless/adapters/azure.d.ts"
+    },
+    "./cli": {
+      "require": "./dist/cli/index.js",
+      "types": "./dist/cli/index.d.ts"
     }
   },
-  "main": "lib/index.js",
-  "module": "lib/index.es.js",
-  "types": "lib/index.d.ts",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "phone-validate": "./dist/cli/index.js"
+  },
   "files": [
-    "lib",
+    "dist",
     "resources"
   ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
-    "build": "rm -rf lib && rollup -c rollup.config.cjs && yarn build:types",
-    "build:types": "tsc --emitDeclarationOnly",
-    "check": "biome check .",
-    "format": "biome format --write .",
-    "lint": "biome lint .",
-    "lint:fix": "biome lint --write .",
+    "build": "rm -rf dist && rollup -c rollup.config.cjs && rollup -c rollup.config.serverless.cjs && chmod +x dist/cli/index.js",
+    "build:main": "rollup -c rollup.config.cjs",
+    "build:serverless": "rollup -c rollup.config.serverless.cjs",
+    "cli": "bun run src/cli/index.ts",
+    "check": "biome check --write",
+    "format": "biome format --write",
+    "lint": "biome check",
+    "lint:fix": "biome check --write",
     "prepare": "husky",
-    "preparemetadata": "rm -rf resources && node .scripts/prepare.js && rm -rf resources/libphonenumber",
-    "prepublishOnly": "yarn build",
+    "preparemetadata": "rm -rf resources && bun run scripts/prepare-metadata.ts && rm -rf resources/libphonenumber",
+    "prepublishOnly": "bun run build",
     "release": "semantic-release",
     "release:dry": "semantic-release --dry-run",
-    "test": "jest",
-    "watch": "rm -rf lib && rollup -cw rollup.config.cjs"
-  },
-  "config": {
-    "commitizen": {
-      "path": "cz-conventional-changelog"
-    }
+    "test": "bun run test:unit && bun run test:isolated",
+    "test:unit": "bun test __tests__/unit --concurrency=1",
+    "test:isolated": "bun test __tests__/isolated --concurrency=1",
+    "test:integration": "INTEGRATION=1 bun test __tests__/integration --concurrency=1",
+    "test:all": "bun run test && bun run test:integration",
+    "test:core": "bun test ./__tests__/unit/01*.test.ts --concurrency=1",
+    "test:cache": "bun test ./__tests__/unit/02*.test.ts --concurrency=1",
+    "test:locales": "bun test ./__tests__/unit/03*.test.ts --concurrency=1",
+    "test:serverless": "bun test ./__tests__/unit/04*.test.ts __tests__/isolated --concurrency=1",
+    "test:adapters": "bun test ./__tests__/unit/05*.test.ts --concurrency=1",
+    "test:cli": "bun test ./__tests__/unit/06*.test.ts --concurrency=1",
+    "test-ci": "bun run test",
+    "typecheck": "tsc --pretty --skipLibCheck --noEmit && tsc --project tsconfig.test.json --pretty --skipLibCheck --noEmit"
   },
   "lint-staged": {
     "*.{js,ts,jsx,tsx}": [
@@ -75,30 +133,36 @@
   },
   "dependencies": {
     "bson": "^7.2.0",
-    "libphonenumber-js": "^1.12.39",
-    "tiny-lru": "^11.4.7"
+    "libphonenumber-js": "^1.12.42",
+    "tiny-lru": "^13.0.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.6",
+    "@biomejs/biome": "^2.4.14",
     "@rollup/plugin-commonjs": "^29.0.2",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-terser": "^1.0.0",
-    "@types/bson": "^4.2.4",
-    "@types/jest": "^30.0.0",
-    "@types/node": "^25.4.0",
-    "@types/shelljs": "^0.10.0",
-    "esbuild": "^0.27.3",
+    "@rollup/plugin-typescript": "^12.3.0",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/github": "^12.0.6",
+    "@semantic-release/npm": "^13.1.5",
+    "@semantic-release/release-notes-generator": "^14.1.0",
+    "@types/aws-lambda": "^8.10.161",
+    "@types/bun": "^1.3.13",
+    "@types/node": "^25.6.0",
+    "conventional-changelog-conventionalcommits": "^9.3.1",
+    "esbuild": "^0.28.0",
     "husky": "^9.1.7",
-    "jest": "^30.3.0",
-    "lint-staged": "^16.3.3",
-    "prettier": "^3.8.1",
-    "rollup": "^4.59.0",
+    "lint-staged": "^16.4.0",
+    "rollup": "^4.60.2",
     "rollup-plugin-esbuild": "^6.2.1",
-    "shelljs": "^0.10.0",
-    "ts-jest": "^29.4.6",
+    "semantic-release": "^25.0.3",
     "tslib": "^2.8.1",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   },
-  "packageManager": "yarn@1.22.22+sha256.c17d3797fb9a9115bf375e31bfd30058cac6bc9c3b8807a3d8cb2094794b51ca"
+  "packageManager": "bun@1.3.13",
+  "engines": {
+    "node": ">= 22.0",
+    "bun": ">= 1.3"
+  }
 }

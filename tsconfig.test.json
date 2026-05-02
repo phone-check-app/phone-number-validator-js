@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "declarationDir": null,
+    "types": ["node", "bun"]
+  },
+  "include": [
+    "__tests__/**/*",
+    "examples/**/*.ts",
+    "scripts/**/*.ts",
+    "src/**/*"
+  ],
+  "exclude": [
+    "examples/serverless/**/*"
+  ]
+}
