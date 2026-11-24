@@ -87,7 +87,7 @@ if (!dryRun) {
 
 console.log(`\n=== Local release: v${version}${dryRun ? " (dry run)" : ""}${distTag ? ` [tag=${distTag}]` : ""} ===`);
 
-// 1. Stamp version into package.json. `prepublishOnly` rebuilds with it.
+// 1. Stamp version into package.json. `prepack` regenerates resources and rebuilds with it.
 const pkgPath = resolve(ROOT, "package.json");
 const originalPkgContents = await readFile(pkgPath, "utf8");
 const pkg = JSON.parse(originalPkgContents);
@@ -103,7 +103,7 @@ async function restorePackageJson() {
 
 let failure = null;
 try {
-  // 2. Build explicitly. `prepublishOnly` runs again on publish — cheap
+  // 2. Build explicitly. `prepack` runs again on publish — cheap
   //    insurance against shipping a stale dist if someone disables it later.
   runOrThrow("bun", ["run", "build"]);
 

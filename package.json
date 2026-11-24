@@ -84,7 +84,7 @@
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "phone-validate": "./dist/cli/index.js"
+    "phone-validate": "dist/cli/index.js"
   },
   "files": [
     "dist",
@@ -105,7 +105,7 @@
     "lint:fix": "biome check --write",
     "prepare": "husky",
     "preparemetadata": "rm -rf resources && bun run scripts/prepare-metadata.ts && rm -rf resources/libphonenumber && biome format --write src/locales.ts",
-    "prepublishOnly": "bun run preparemetadata && bun run build && bun run scripts/check-package.ts",
+    "prepack": "bun run preparemetadata && bun run build && bun run scripts/check-package.ts",
     "release": "semantic-release",
     "release:dry": "semantic-release --dry-run",
     "release:local": "bun run scripts/release-local.mjs",
