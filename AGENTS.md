@@ -13,6 +13,8 @@ this file rule-shaped, not spec-shaped.
 - **Biome** handles lint + format. `biome.json` is the source of truth.
 - **Rollup** builds the published CJS + ESM bundles via `rollup.config.cjs`
   and `rollup.config.serverless.cjs`.
+- **TypeScript 7** (native `tsc`) typechecks and emits `.d.ts` via
+  `tsconfig.build.json`; it has no JS API, so no TypeScript rollup plugin.
 - **TypeScript strict mode** for both `tsconfig.json` (src) and
   `tsconfig.test.json` (src + tests + examples + scripts).
 
