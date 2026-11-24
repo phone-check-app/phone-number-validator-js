@@ -8,6 +8,7 @@
  *   2. for each locale + country code, parse the upstream <CC>.txt into a
  *      `{ prefix: description }` object and serialize to BSON
  *   3. parse `timezones/map_data.txt` into one global `timezones.bson`
+ *   3b. write `resources/source.json` with the upstream commit + dates
  *   4. regenerate `src/locales.ts` with the up-to-date locale unions
  *
  * Run with `bun run preparemetadata`.
@@ -63,7 +64,10 @@ async function prepareLocale(localePath: string, locale: string, kind: 'geocodes
 }
 
 async function preparePath(dataPath: string, kind: 'geocodes' | 'carrier'): Promise<string[]> {
-  const locales = readdirSync(dataPath).filter((source) => isDir(join(dataPath, source)));
+  // Sorted so the regenerated src/locales.ts is stable across filesystems.
+  const locales = readdirSync(dataPath)
+    .filter((source) => isDir(join(dataPath, source)))
+    .sort();
   await Promise.all(locales.map((locale) => prepareLocale(join(dataPath, locale), locale, kind)));
   return locales;
 }
@@ -86,6 +90,18 @@ async function main(): Promise<void> {
       stdio: 'inherit',
     });
   }
+
+  // Record which upstream snapshot the BSON tree was built from, so a published
+  // tarball can always be traced back to a libphonenumber commit.
+  const upstreamCommit = execSync('git log -1 --format=%H%n%cI', { cwd: UPSTREAM }).toString().trim().split('\n');
+  const source = {
+    repository: 'https://github.com/google/libphonenumber',
+    commit: upstreamCommit[0],
+    committedAt: upstreamCommit[1],
+    generatedAt: new Date().toISOString(),
+  };
+  writeFileSync(join(RESOURCES, 'source.json'), `${JSON.stringify(source, null, 2)}\n`);
+  console.log(`Upstream google/libphonenumber ${source.commit} (${source.committedAt})`);
 
   console.log('Preparing geocode tables…');
   const geoLocales = await preparePath(join(RESOURCE_BASE, 'geocoding'), 'geocodes');

@@ -127,14 +127,24 @@ inputs return `{ valid: false, error }` rather than aborting the batch.
 
 The BSON tables under `resources/` ship with the npm package (`files: ["dist", "resources"]`)
 but are **gitignored** — they're regenerated from upstream Google
-libphonenumber via `bun run preparemetadata`. The layout:
+libphonenumber via `bun run preparemetadata`. `prepublishOnly` always runs
+`preparemetadata → build → scripts/check-package.ts`, so every release ships
+the newest upstream snapshot and refuses to publish a tarball without it
+(2.0.0–2.1.0 shipped without `resources/`, so every lookup returned null).
+Renovate bumps of `libphonenumber-js` land as `fix(metadata)` commits, which
+cut a patch release and therefore a fresh resource snapshot. The layout:
 
 ```
 resources/
+├── source.json                          # upstream commit + dates of this snapshot
 ├── carrier/<locale>/<country-code>.bson
 ├── geocodes/<locale>/<country-code>.bson
 └── timezones.bson
 ```
+
+Upstream data: <https://github.com/google/libphonenumber/tree/master/resources>
+(`carrier/`, `geocoding/`, `timezones/map_data.txt`). Google maintains these
+prefix tables from each national regulator's numbering plan.
 
 For serverless deployments where the package isn't unpacked into the runtime
 (Cloudflare Workers, Vercel Edge), upload the same tree to KV / R2 / a CDN

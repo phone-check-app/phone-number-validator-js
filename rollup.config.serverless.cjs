@@ -3,7 +3,6 @@ const json = require('@rollup/plugin-json');
 const resolve = require('@rollup/plugin-node-resolve');
 const commonjs = require('@rollup/plugin-commonjs');
 const terser = require('@rollup/plugin-terser');
-const typescript = require('@rollup/plugin-typescript');
 
 // Edge runtimes (Cloudflare Workers, Vercel Edge, Deno Deploy) don't have
 // `node:fs`. We only externalize what's strictly needed at runtime; everything
@@ -25,19 +24,6 @@ const plugins = [
   }),
 ];
 
-const declarationPlugin = typescript({
-  tsconfig: './tsconfig.json',
-  declaration: true,
-  declarationDir: './dist/serverless',
-  emitDeclarationOnly: true,
-  rootDir: './src',
-  include: ['src/serverless/**/*', 'src/types.ts', 'src/locales.ts', 'src/cache.ts', 'src/core.ts'],
-  exclude: ['**/*.test.ts', '**/*.spec.ts', '__tests__/**/*'],
-  compilerOptions: {
-    module: 'esnext',
-    sourceMap: true,
-  },
-});
 
 const productionPlugins = [
   ...plugins,
@@ -63,7 +49,7 @@ module.exports = [
     input: 'src/serverless/verifier.ts',
     output: { file: 'dist/serverless/verifier.esm.js', format: 'esm', sourcemap: true },
     external,
-    plugins: [...plugins, declarationPlugin],
+    plugins,
   },
   // Pure verifier (CommonJS)
   {

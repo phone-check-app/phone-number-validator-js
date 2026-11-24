@@ -95,7 +95,7 @@
     "provenance": true
   },
   "scripts": {
-    "build": "rm -rf dist && rollup -c rollup.config.cjs && rollup -c rollup.config.serverless.cjs && chmod +x dist/cli/index.js",
+    "build": "rm -rf dist && rollup -c rollup.config.cjs && rollup -c rollup.config.serverless.cjs && tsc -p tsconfig.build.json && chmod +x dist/cli/index.js",
     "build:main": "rollup -c rollup.config.cjs",
     "build:serverless": "rollup -c rollup.config.serverless.cjs",
     "cli": "bun run src/cli/index.ts",
@@ -104,10 +104,11 @@
     "lint": "biome check",
     "lint:fix": "biome check --write",
     "prepare": "husky",
-    "preparemetadata": "rm -rf resources && bun run scripts/prepare-metadata.ts && rm -rf resources/libphonenumber",
-    "prepublishOnly": "bun run build",
+    "preparemetadata": "rm -rf resources && bun run scripts/prepare-metadata.ts && rm -rf resources/libphonenumber && biome format --write src/locales.ts",
+    "prepublishOnly": "bun run preparemetadata && bun run build && bun run scripts/check-package.ts",
     "release": "semantic-release",
     "release:dry": "semantic-release --dry-run",
+    "release:local": "bun run scripts/release-local.mjs",
     "test": "bun run test:unit && bun run test:isolated",
     "test:unit": "bun test __tests__/unit --concurrency=1",
     "test:isolated": "bun test __tests__/isolated --concurrency=1",
@@ -132,37 +133,34 @@
     ]
   },
   "dependencies": {
-    "bson": "^7.2.0",
-    "libphonenumber-js": "^1.12.42",
-    "tiny-lru": "^13.0.0"
+    "bson": "^7.3.4",
+    "libphonenumber-js": "^1.13.17",
+    "tiny-lru": "^13.1.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.14",
-    "@rollup/plugin-commonjs": "^29.0.2",
+    "@biomejs/biome": "^2.6.9",
+    "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
-    "@rollup/plugin-terser": "^1.0.0",
-    "@rollup/plugin-typescript": "^12.3.0",
+    "@rollup/plugin-terser": "^1.0.2",
     "@semantic-release/commit-analyzer": "^13.0.1",
-    "@semantic-release/github": "^12.0.6",
-    "@semantic-release/npm": "^13.1.5",
-    "@semantic-release/release-notes-generator": "^14.1.0",
-    "@types/aws-lambda": "^8.10.161",
-    "@types/bun": "^1.3.13",
-    "@types/node": "^25.6.0",
-    "conventional-changelog-conventionalcommits": "^9.3.1",
-    "esbuild": "^0.28.0",
+    "@semantic-release/github": "^12.0.11",
+    "@semantic-release/npm": "^13.2.0",
+    "@semantic-release/release-notes-generator": "^14.1.1",
+    "@types/aws-lambda": "^8.10.164",
+    "@types/bun": "^1.4.5",
+    "@types/node": "^26.6.7",
+    "esbuild": "^0.28.2",
     "husky": "^9.1.7",
-    "lint-staged": "^16.4.0",
-    "rollup": "^4.60.2",
+    "lint-staged": "^17.6.2",
+    "rollup": "^4.68.8",
     "rollup-plugin-esbuild": "^6.2.1",
-    "semantic-release": "^25.0.3",
-    "tslib": "^2.8.1",
-    "typescript": "^6.0.3"
+    "semantic-release": "^26.0.1",
+    "typescript": "^7.0.2"
   },
-  "packageManager": "bun@1.3.13",
+  "packageManager": "bun@1.4.5",
   "engines": {
     "node": ">= 22.0",
-    "bun": ">= 1.3"
+    "bun": ">=1.4.5"
   }
 }
