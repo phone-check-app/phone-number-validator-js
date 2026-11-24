@@ -70,7 +70,7 @@ jobs:
         run: bun run build
 
       # resources/ is gitignored — generate it from upstream google/libphonenumber
-      # exactly as prepublishOnly does, then assert the tarball would ship it.
+      # exactly as prepack does, then assert the tarball would ship it.
       - name: Prepare metadata
         if: inputs.run-build
         run: bun run preparemetadata
