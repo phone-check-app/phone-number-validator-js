@@ -5,7 +5,7 @@
  * generated it), so every carrier / geocoder / timezone lookup returned null.
  *
  * Usage:
- *   bun run scripts/check-package.ts      # runs automatically in prepublishOnly
+ *   bun run scripts/check-package.ts      # runs automatically in prepack
  */
 import { spawnSync } from 'node:child_process';
 

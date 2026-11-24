@@ -127,7 +127,7 @@ inputs return `{ valid: false, error }` rather than aborting the batch.
 
 The BSON tables under `resources/` ship with the npm package (`files: ["dist", "resources"]`)
 but are **gitignored** — they're regenerated from upstream Google
-libphonenumber via `bun run preparemetadata`. `prepublishOnly` always runs
+libphonenumber via `bun run preparemetadata`. `prepack` (run by both `npm pack` and `npm publish`) always runs
 `preparemetadata → build → scripts/check-package.ts`, so every release ships
 the newest upstream snapshot and refuses to publish a tarball without it
 (2.0.0–2.1.0 shipped without `resources/`, so every lookup returned null).
