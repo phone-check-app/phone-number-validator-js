@@ -84,7 +84,7 @@
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "phone-validate": "./dist/cli/index.js"
+    "phone-validate": "dist/cli/index.js"
   },
   "files": [
     "dist",

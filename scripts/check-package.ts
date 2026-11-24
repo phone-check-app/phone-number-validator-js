@@ -41,6 +41,14 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
+// npm silently drops manifest fields it considers invalid (2.2.0 lost its `bin` to a './' prefix).
+const publishDryRun = spawnSync('npm', ['publish', '--dry-run', '--ignore-scripts'], { encoding: 'utf8' });
+if (publishDryRun.stderr.includes('errors corrected')) {
+  console.error(`✗ npm would rewrite package.json on publish:\n${publishDryRun.stderr}`);
+  console.error('  Next step: run `npm pkg fix`, review the diff, commit, and publish again.');
+  process.exit(1);
+}
+
 console.log(
   `✓ Tarball OK: ${manifest.entryCount} files, ${(manifest.unpackedSize / 1024 / 1024).toFixed(1)} MB, resources + dist present.`
 );
